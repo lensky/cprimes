@@ -17,6 +17,9 @@ add_executable(test-c-primes test-primes.cpp)
 
 target_link_libraries(test-c-primes optimized "${binary_dir}/ReleaseLibs/${CMAKE_STATIC_LIBRARY_PREFIX}gtest${CMAKE_STATIC_LIBRARY_SUFFIX}")
 target_link_libraries(test-c-primes debug "${binary_dir}/DebugLibs/${CMAKE_STATIC_LIBRARY_PREFIX}gtest${CMAKE_STATIC_LIBRARY_SUFFIX}")
+if (UNIX)
+  target_link_libraries(test-c-primes pthread)
+endif (UNIX)
 target_include_directories(test-c-primes PUBLIC "${source_dir}/include")
 
 target_link_libraries(test-c-primes primes)

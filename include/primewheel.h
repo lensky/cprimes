@@ -1,6 +1,7 @@
 #ifndef PRIMEWHEEL_H
 #define PRIMEWHEEL_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "types.h"
