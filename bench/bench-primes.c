@@ -6,9 +6,9 @@
 #include "cbench.h"
 
 #include "bitarray.h"
-#include "primewheel.h"
-#include "sieve.h"
-#include "cprimes.h"
+#include "cprimes/primewheel.h"
+#include "cprimes/sieve.h"
+#include "cprimes/cprimes.h"
 
 const size_t unsegmented_maxp = 1e7;
 

@@ -2,12 +2,12 @@
 #include <math.h>
 #include "bitarray.h"
 
-#include "utils.h"
-#include "cvector.h"
-#include "primewheel.h"
-#include "cprimes.h"
+#include "cprimes/utils.h"
+#include "cprimes/cvector.h"
+#include "cprimes/primewheel.h"
+#include "cprimes/cprimes.h"
 
-#include "sieve.h"
+#include "cprimes/sieve.h"
 
 void new_sieve(sieve* sv, size_t nbits, size_t start_ix) {
     sv->sievebits = (bitarray*) malloc(sizeof(bitarray));

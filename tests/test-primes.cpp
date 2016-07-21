@@ -1,7 +1,7 @@
 extern "C" {
-    #include "primewheel.h"
-    #include "sieve.h"
-    #include "cprimes.h"
+    #include "cprimes/primewheel.h"
+    #include "cprimes/sieve.h"
+    #include "cprimes/cprimes.h"
     #include "bitarray.h"
 }
 #include <cstdlib>

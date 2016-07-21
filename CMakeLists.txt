@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.3)
 project(cprimes)
 
 option(BUILD_SHARED_LIBS "Build as a shared library." OFF)
@@ -24,6 +24,8 @@ if(CMAKE_COMPILER_IS_GNUCXX)
     "${CMAKE_CXX_FLAGS_RELEASE} -O3 -mtune=native -march=native -funroll-loops -ffast-math")
 endif()
 
+set(CMAKE_C_STANDARD 11)
+
 find_library(
   LIBBITARRAY
   NAMES bitarray libbitarray
@@ -34,6 +36,7 @@ find_path(
   )
 
 include_directories(include)
+install(DIRECTORY include DESTINATION include)
 add_subdirectory(src)
 
 enable_testing()

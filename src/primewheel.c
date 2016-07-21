@@ -1,7 +1,7 @@
 #include <stdlib.h>
 
-#include "utils.h"
-#include "primewheel.h"
+#include "cprimes/utils.h"
+#include "cprimes/primewheel.h"
 
 void new_primewheel(primewheel* pw, size_t nprimes) {
     pw->nprimes = nprimes;

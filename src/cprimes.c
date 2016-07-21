@@ -1,10 +1,10 @@
 #include "bitarray.h"
 
-#include "types.h"
-#include "cvector.h"
-#include "sieve.h"
+#include "cprimes/types.h"
+#include "cprimes/cvector.h"
+#include "cprimes/sieve.h"
 
-#include "cprimes.h"
+#include "cprimes/cprimes.h"
 
 static inline void count_primes_in_sieve(const primewheel* const pw,
                                          sieve* sieve,

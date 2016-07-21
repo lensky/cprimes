@@ -3,8 +3,8 @@
 #include <stdbool.h>
 #include <math.h>
 
-#include "types.h"
-#include "utils.h"
+#include "cprimes/types.h"
+#include "cprimes/utils.h"
 
 bool is_coprime(const prime *const ps, size_t nps, prime p) {
     size_t fsqrtp = (size_t) floor(sqrt((double) p));

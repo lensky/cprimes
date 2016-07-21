@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include "cvector.h"
+#include "cprimes/cvector.h"
 
 void new_cvector_cap(cvector* cv, size_t sizeof_elt, size_t cap) {
     cv->length = 0;
