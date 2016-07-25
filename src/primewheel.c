@@ -10,6 +10,7 @@ void new_primewheel(primewheel* pw, size_t nprimes) {
 
     pw->primes[0] = 2;
     pw->circumference = 2;
+    pw->spokes = 1;
 
     prime p = 3;
 
@@ -18,12 +19,11 @@ void new_primewheel(primewheel* pw, size_t nprimes) {
     for (i = 1; i < nprimes; i++) {
         pw->primes[i] = p;
         pw->circumference *= p;
+        pw->spokes *= (p - 1);
         p = find_next_coprime(pw->primes, i, p + 2);
     }
 
-    /* TODO: Bug for nprimes <= 1 */
-    pw->spokes = 2;
-    pw->cop_deltas = (prime*) malloc(sizeof(prime) * (pw->circumference / 2));
+    pw->cop_deltas = (prime*) malloc(sizeof(prime) * pw->spokes);
     pw->ix_deltas = (size_t*) malloc(sizeof(prime) * pw->circumference);
 
     pw->cop_deltas[0] = 1;
@@ -33,14 +33,13 @@ void new_primewheel(primewheel* pw, size_t nprimes) {
     pw->ix_deltas[p] = 1;
 
     prime q;
+    i = 2;
     for (q = p + 2; q < pw->circumference; q += 2) {
         if (is_coprime(pw->primes, nprimes, q)) {
-            pw->cop_deltas[pw->spokes] = q;
-            pw->ix_deltas[q] = pw->spokes;
-            pw->spokes++;
+            pw->cop_deltas[i] = q;
+            pw->ix_deltas[q] = i++; // Note we increment i here
         }
     }
-    pw->cop_deltas = (prime*) realloc(pw->cop_deltas, sizeof(prime) * pw->spokes);
 
     prime dixi0;
     prime dp;
