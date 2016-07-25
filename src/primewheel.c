@@ -23,62 +23,70 @@ void new_primewheel(primewheel* pw, size_t nprimes) {
         p = find_next_coprime(pw->primes, i, p + 2);
     }
 
-    pw->cop_deltas = (prime*) malloc(sizeof(prime) * pw->spokes);
-    pw->ix_deltas = (size_t*) malloc(sizeof(prime) * pw->circumference);
+    pw->wp_coprimes = (prime*) malloc(sizeof(prime) * pw->spokes);
+    pw->ix_of_coprime = (size_t*) malloc(sizeof(prime) * pw->circumference);
 
-    pw->cop_deltas[0] = 1;
-    pw->cop_deltas[1] = p;
+    pw->wp_coprimes[0] = 1;
+    pw->wp_coprimes[1] = p;
 
-    pw->ix_deltas[1] = 0;
-    pw->ix_deltas[p] = 1;
+    pw->ix_of_coprime[1] = 0;
+    pw->ix_of_coprime[p] = 1;
 
     prime q;
     i = 2;
     for (q = p + 2; q < pw->circumference; q += 2) {
         if (is_coprime(pw->primes, nprimes, q)) {
-            pw->cop_deltas[i] = q;
-            pw->ix_deltas[q] = i++; // Note we increment i here
+            pw->wp_coprimes[i] = q;
+            pw->ix_of_coprime[q] = i++; // Note we increment i here
         }
     }
 
-    prime dixi0;
-    prime dp;
-    pw->dix_ixpart = (size_t*) malloc(pw->spokes * pw->spokes * 2 * sizeof(size_t));
+    pw->incr_ix_mod = (size_t*) malloc(pw->spokes * (pw->spokes - 1) * sizeof(size_t));
+    pw->incr_ix_mod_tot = (size_t*) malloc(pw->spokes * sizeof(size_t));
+    pw->incr_ix_div = (size_t*) malloc((pw->spokes - 1) * sizeof(size_t));
+
     for (i = 0; i < pw->spokes; i++) {
-        q = pw->cop_deltas[i];
-        dixi0 = wcoprimetoix(pw, q * q);
-        pw->dix_ixpart[i * 2 * pw->spokes] = dixi0;
-        pw->dix_ixpart[i * 2 * pw->spokes + 1] = 0;
-        for (size_t j = 1; j < pw->spokes; j++) {
-            dp = pw->cop_deltas[(i + j) % pw->spokes];
-            if (dp < q) {
-                dp += pw->circumference;
-            }
-            pw->dix_ixpart[i * 2 * pw->spokes + 2 * j] =
-                wcoprimetoix(pw, q * dp) - dixi0;
-            pw->dix_ixpart[i * 2 * pw->spokes + 2 * j + 1] =
-                dp - q;
+        prime cp = pw->wp_coprimes[i];
+        pw->incr_ix_mod_tot[i] = 0;
+        for (size_t n = 0; n < pw->spokes - 1; n++) {
+            prime cn = pw->wp_coprimes[n];
+            prime cn1 = pw->wp_coprimes[n + 1];
+            prime cpcn = cp * cn;
+            prime cpcn1 = cp * cn1;
+            pw->incr_ix_mod[(pw->spokes - 1) * i + n] =
+                (pw->ix_of_coprime[cpcn1 % pw->circumference]
+                 + pw->spokes * ((cpcn1 / pw->circumference)
+                                 - (cpcn / pw->circumference)))
+                - pw->ix_of_coprime[cpcn % pw->circumference];
+            pw->incr_ix_mod_tot[i] += pw->incr_ix_mod[(pw->spokes - 1) * i + n];
+        }
+
+        if (i < pw->spokes - 1) {
+            pw->incr_ix_div[i] = pw->spokes * (pw->wp_coprimes[i + 1] - cp);
         }
     }
 }
 
 void free_primewheel(primewheel* pw) {
     free(pw->primes);
-    free(pw->cop_deltas);
-    free(pw->ix_deltas);
-    free(pw->dix_ixpart);
+    free(pw->wp_coprimes);
+    free(pw->ix_of_coprime);
+
+    free(pw->incr_ix_mod);
+    free(pw->incr_ix_mod_tot);
+    free(pw->incr_ix_div);
 }
 
 prime ixtowcoprime(const primewheel *const pw, size_t ix) {
-    return (ix / pw->spokes) * pw->circumference + pw->cop_deltas[ix % pw->spokes];
+    return (ix / pw->spokes) * pw->circumference + pw->wp_coprimes[ix % pw->spokes];
 }
 
 size_t wcoprimetoix(const primewheel *const pw, prime cp) {
     return (cp / pw->circumference) * pw->spokes
-        + pw->ix_deltas[cp % pw->circumference];
+        + pw->ix_of_coprime[cp % pw->circumference];
 }
 
-size_t find_closest_ixl(const primewheel *const pw, prime n) {
+size_t closest_w_ixle(const primewheel *const pw, prime n) {
     if (!(n & 1)) {
         n -= 1;
     }
@@ -87,16 +95,16 @@ size_t find_closest_ixl(const primewheel *const pw, prime n) {
     prime nrcw = n % pw->circumference;
 
     size_t i;
-    for (i = 0; (i < pw->spokes) && (pw->cop_deltas[i] <= nrcw); i++) {}
+    for (i = 0; (i < pw->spokes) && (pw->wp_coprimes[i] <= nrcw); i++) {}
     return (ndcw * pw->spokes + i) - 1;
 }
 
-size_t find_closest_ixg(const primewheel *const pw, prime n) {
+size_t closest_w_ixge(const primewheel *const pw, prime n) {
     n |= 1;
     prime ndcw = n / pw->circumference;
     prime nrcw = n % pw->circumference;
 
     size_t i;
-    for (i = 0; (i < pw->spokes) && (pw->cop_deltas[i] < nrcw); i++) {}
+    for (i = 0; (i < pw->spokes) && (pw->wp_coprimes[i] < nrcw); i++) {}
     return ndcw * pw->spokes + i;
 }

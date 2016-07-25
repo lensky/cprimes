@@ -17,7 +17,7 @@ TEST(WheelTest, CorrectPrimes) {
     primewheel tw;
     new_primewheel(&tw, 4);
     for (size_t i = 0; i < tw.nprimes; i++) {
-        ASSERT_EQ(tw.primes[i], KNOWN_LOW_PRIMES[i]);
+        ASSERT_EQ(KNOWN_LOW_PRIMES[i], tw.primes[i]);
     }
     free_primewheel(&tw);
 }
@@ -27,9 +27,9 @@ prime W3_COPS[] = {1,7,11,13,17,19,23,29};
 TEST(WheelTest, CorrectDeltas) {
     primewheel tw;
     new_primewheel(&tw, 3);
-    ASSERT_EQ(tw.spokes, 8);
+    ASSERT_EQ(8, tw.spokes);
     for (size_t i = 0; i < tw.spokes; i++) {
-        ASSERT_EQ(tw.cop_deltas[i], W3_COPS[i]);
+        ASSERT_EQ(W3_COPS[i], tw.wp_coprimes[i]);
     }
 }
 
@@ -40,7 +40,7 @@ TEST(WheelTest, FindClosestIx) {
     new_primewheel(&pw, 4);
     for (size_t i = 0; i < ncixtests; i++) {
         prime r = rand();
-        size_t ix = find_closest_ixl(&pw, r);
+        size_t ix = closest_w_ixle(&pw, r);
         ASSERT_LE(ixtowcoprime(&pw, ix), r);
         ASSERT_LT(r, ixtowcoprime(&pw, ix + 1));
     }
@@ -57,7 +57,7 @@ TEST(WheelTest, IxMapping) {
         size_t p = ixtowcoprime(&pw, i);
         size_t pix = wcoprimetoix(&pw, p);
 
-        ASSERT_EQ(pix, i);
+        ASSERT_EQ(i, pix);
     }
 
     free_primewheel(&pw);
@@ -83,7 +83,8 @@ TEST(SingleSieveTest, Simple) {
         }
     }
     sieving_primes_to_n(&pw, P_LIMITS[ssix], &svps, &nsvps);
-    ASSERT_EQ(nsvps, P_COUNTS[ssix] - pw.nprimes);
+
+    ASSERT_EQ(P_COUNTS[ssix] - pw.nprimes, nsvps);
 
     for (size_t i = 0; i < ssix; i++) {
         size_t count = pw.nprimes;
@@ -140,7 +141,7 @@ TEST(SegmentedSieveTest, ExtendSiever) {
         svp1 = svr1.sieving_primes[i];
         svp2 = svr2.sieving_primes[i];
         ASSERT_EQ(svp2->prime, svp1->prime);
-        ASSERT_EQ(svp2->ixp2, svp1->ixp2);
+        ASSERT_EQ(svp2->offset, svp1->offset);
     }
 
     free_siever(&svr1); free_siever(&svr2);

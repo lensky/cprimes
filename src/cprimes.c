@@ -82,7 +82,7 @@ static inline void push_prime_in_sieve(const primewheel * const pw,
     for (size_t i = 0; i < sieve->sievebits->nbits; i++) {
         if (testbit(sieve->sievebits, i)) {
             prime* pp = (prime*) next_elt(primesv);
-            *pp = ixtowcoprime(pw, i + sieve->start_ix);
+            *pp = ixtowcoprime(pw, i + sieve->ix_offset);
         }
     }
 }
