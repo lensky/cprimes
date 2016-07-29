@@ -34,7 +34,7 @@ void new_sieving_prime(const primewheel * const pw,
     svp->offset = ixp % pw->spokes;
 
     svp->needle = svp->offset;
-    svp->next_ix = wcoprimetoix(pw, p*p);
+    svp->next_ix = w_ix_of_coprime(pw, p*p);
 }
 
 void new_siever(siever* siever,
@@ -85,7 +85,7 @@ void extend_siever(siever* siever,
     for (size_t i = 0; i < n_newps; i++) {
         sieving_prime* svp = (sieving_prime*) malloc(sizeof(sieving_prime));
         prime p = newps[i];
-        new_sieving_prime(pw, svp, p, wcoprimetoix(pw, p));
+        new_sieving_prime(pw, svp, p, w_ix_of_coprime(pw, p));
 
         n_svp_start[i] = svp;
     }
@@ -95,19 +95,54 @@ void extend_siever(siever* siever,
 
 /// Calculates the increment to the index for the sieving prime given a needle.
 // TODO: Look at speeding this function up
-inline size_t calc_svp_ix_increment(const primewheel* const pw,
-                                    const sieving_prime* svp,
-                                    uint_fast32_t needle) {
-    if (needle < (pw->spokes - 1)) {
-        return pw->incr_ix_mod[(pw->spokes - 1) * svp->offset
-                               + needle]
-            + svp->p_div_C * pw->incr_ix_div[needle];
+static inline void svp_ix_increment(const primewheel* const pw,
+                                    const sieving_prime* const svp,
+                                    size_t* next_ix,
+                                    uint_fast32_t* needle) {
+    if (*needle < (pw->spokes - 1)) {
+        *next_ix += pw->incr_ix_mod[(pw->spokes - 1) * svp->offset
+                                    + *needle]
+            + svp->p_div_C * pw->incr_ix_div[*needle];
+        (*needle)++;
     } else {
-        return pw->spokes * (svp->prime - svp->p_div_C
-                             * (pw->wp_coprimes[pw->spokes - 1]
-                                 - 1))
+        *next_ix +=
+            pw->spokes * (svp->prime - svp->p_div_C
+                          * (pw->wp_coprimes[pw->spokes - 1]
+                             - 1))
             - pw->incr_ix_mod_tot[svp->offset];
+        *needle = 0;
     }
+}
+
+static inline size_t calc_svp_ix_increment(const primewheel* const pw,
+                                           const sieving_prime* svp,
+                                           uint_fast32_t needle) {
+    size_t tmp_ix = 0;
+    svp_ix_increment(pw, svp, &tmp_ix, &needle);
+    return tmp_ix;
+}
+
+// Note: this separate loop without checks in the inner portion is FAR
+// more efficient than the alternative.
+
+// TODO: Investigate additional speedup resulting from extraction to
+// separate function
+static size_t inner_marking_loop(const size_t* const ix_workspace,
+                                 bitarray* const bitarray,
+                                 size_t L_w,
+                                 size_t dp) {
+    bitunit* bits = bitarray->bits;
+    size_t nbits = bitarray->nbits;
+    size_t delta_ix = 0;
+
+    for (size_t M = ix_workspace[L_w - 1];
+         M + delta_ix < nbits;
+         delta_ix += dp) {
+        for (size_t i = 0; i < L_w; i++) {
+            CLEARBIT(bits, delta_ix + ix_workspace[i]);
+        }
+    }
+    return delta_ix;
 }
 
 /// Marks the prime in the current sieve and prepares for sieving with
@@ -121,8 +156,8 @@ inline size_t calc_svp_ix_increment(const primewheel* const pw,
    @param[in] pw primewheel
    @param[in] sieve current sieve
    @param[in,out] svp sieving prime, will have next_ix appropriately updated
- */
-inline void do_mark_prime(size_t* ix_workspace,
+*/
+static void do_mark_prime(size_t* ix_workspace,
                           const primewheel* const pw,
                           sieve* const sieve,
                           sieving_prime* svp) {
@@ -134,47 +169,30 @@ inline void do_mark_prime(size_t* ix_workspace,
         return;
     }
 
-    size_t dp = pw->spokes * svp->prime;
+    const size_t L_w = pw->spokes;
+    size_t dp = L_w * svp->prime;
     size_t tmp_ix = svp->next_ix;
-    size_t old_needle = svp->needle;
 
-    CLEARBIT(bits->bits, tmp_ix);
-    ix_workspace[0] = tmp_ix + dp;
+    ix_workspace[0] = tmp_ix;
 
     uint_fast32_t i;
-    for (i = 1; i < pw->spokes; i++) {
-        tmp_ix += calc_svp_ix_increment(pw, svp, svp->needle);
-        svp->needle = svp->needle < pw->spokes - 1 ? svp->needle + 1 : 0;
-
-        if (tmp_ix < bits->nbits) {
-            CLEARBIT(bits->bits, tmp_ix);
-            ix_workspace[i] = tmp_ix + dp;
-        } else {
-            svp->next_ix = tmp_ix - bits->nbits;
-            return;
-        }
-    }
-    svp->needle = old_needle;
-
-    // Note: this separate loop without checks in the inner portion is
-    // FAR more efficient than the alternative.
-    while (ix_workspace[pw->spokes - 1] < bits->nbits) {
-        for (i = 0; i < pw->spokes; i++) {
-            CLEARBIT(bits->bits, ix_workspace[i]);
-            ix_workspace[i] += dp;
-        }
+    for (i = 1; i < L_w; i++) {
+        svp_ix_increment(pw, svp, &tmp_ix, &svp->needle);
+        ix_workspace[i] = tmp_ix;
     }
 
-    for (i = 0; i < pw->spokes; i++) {
-        if (ix_workspace[i] < bits->nbits) {
-            CLEARBIT(bits->bits, ix_workspace[i]);
-        } else {
-            svp->next_ix = ix_workspace[i] - bits->nbits;
-            svp->needle += i;
-            if (svp->needle >= pw->spokes) { svp->needle -= pw->spokes; }
-            return;
-        }
+    size_t delta_ix = inner_marking_loop(ix_workspace,
+                                         bits,
+                                         L_w,
+                                         dp);
+
+    for (i = 0; ix_workspace[i] + delta_ix < bits->nbits; i++) {
+        CLEARBIT(bits->bits, ix_workspace[i] + delta_ix);
     }
+
+    svp->next_ix = (delta_ix + ix_workspace[i]) - bits->nbits;
+    svp->needle += i + 1;
+    if (svp->needle >= L_w) { svp->needle -= L_w; }
 }
 
 /// Initializes sieving prime for sieving, starting with the given sieve.
@@ -184,7 +202,7 @@ void init_svp_for_sieving(const primewheel* const pw,
                           sieving_prime* svp) {
     svp->needle = svp->offset;
 
-    size_t ixp2 = wcoprimetoix(pw, svp->prime * svp->prime);
+    size_t ixp2 = w_ix_of_coprime(pw, svp->prime * svp->prime);
     size_t delta_p = pw->spokes * svp->prime;
 
     if (ixp2 < sieve->ix_offset) {
@@ -231,7 +249,7 @@ void sieving_primes_to_n(const primewheel * const pw,
 
     for (i = 0; i < max_sieve_ixp1; i++) {
         if (testbit(sieve.sievebits, i)) {
-            prime p = ixtowcoprime(pw, i + 1);
+            prime p = w_coprime_of_ix(pw, i + 1);
             svp = (sieving_prime**) next_elt(&pvsvps);
             *svp = (sieving_prime*) malloc(sizeof(sieving_prime));
             new_sieving_prime(pw, *svp, p, i + 1);
@@ -245,7 +263,7 @@ void sieving_primes_to_n(const primewheel * const pw,
 
     for (; i < nix; i++) {
         if (testbit(sieve.sievebits, i)) {
-            prime p = ixtowcoprime(pw, i + 1);
+            prime p = w_coprime_of_ix(pw, i + 1);
             svp = (sieving_prime**) next_elt(&pvsvps);
             *svp = (sieving_prime*) malloc(sizeof(sieving_prime));
             new_sieving_prime(pw, *svp, p, i + 1);

@@ -41,8 +41,8 @@ TEST(WheelTest, FindClosestIx) {
     for (size_t i = 0; i < ncixtests; i++) {
         prime r = rand();
         size_t ix = closest_w_ixle(&pw, r);
-        ASSERT_LE(ixtowcoprime(&pw, ix), r);
-        ASSERT_LT(r, ixtowcoprime(&pw, ix + 1));
+        ASSERT_LE(w_coprime_of_ix(&pw, ix), r);
+        ASSERT_LT(r, w_coprime_of_ix(&pw, ix + 1));
     }
     free_primewheel(&pw);
 }
@@ -54,8 +54,8 @@ TEST(WheelTest, IxMapping) {
     new_primewheel(&pw, 4);
 
     for (size_t i = 0; i < nixmtests; i++) {
-        size_t p = ixtowcoprime(&pw, i);
-        size_t pix = wcoprimetoix(&pw, p);
+        size_t p = w_coprime_of_ix(&pw, i);
+        size_t pix = w_ix_of_coprime(&pw, p);
 
         ASSERT_EQ(i, pix);
     }

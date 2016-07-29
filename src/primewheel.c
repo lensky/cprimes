@@ -77,15 +77,6 @@ void free_primewheel(primewheel* pw) {
     free(pw->incr_ix_div);
 }
 
-prime ixtowcoprime(const primewheel *const pw, size_t ix) {
-    return (ix / pw->spokes) * pw->circumference + pw->wp_coprimes[ix % pw->spokes];
-}
-
-size_t wcoprimetoix(const primewheel *const pw, prime cp) {
-    return (cp / pw->circumference) * pw->spokes
-        + pw->ix_of_coprime[cp % pw->circumference];
-}
-
 size_t closest_w_ixle(const primewheel *const pw, prime n) {
     if (!(n & 1)) {
         n -= 1;

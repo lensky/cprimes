@@ -14,7 +14,7 @@ typedef struct sieve {
 } sieve;
 
 typedef struct sieving_prime {
-    size_t next_ix;
+    uint_fast64_t next_ix;
     uint_fast32_t needle;
 
     uint_fast32_t offset; ///< `ix_of_coprime[p % C_w]` (`== ix[p] %

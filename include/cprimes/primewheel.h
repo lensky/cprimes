@@ -34,7 +34,6 @@ typedef struct primewheel {
     size_t* incr_ix_mod;
 
     /// L_w array for sum of `incr_ix_mod[(L_w - 1) * ip + n]` over n.
-    // TODO: Investigate regularities in this array.
     size_t* incr_ix_mod_tot;
 
     /// L_w - 1 array used to calculate offsets only dependent on `floor(p / C_w)`.
@@ -58,10 +57,15 @@ void new_primewheel(primewheel* pw, size_t nprimes);
 void free_primewheel(primewheel* pw);
 
 /// Takes an array index to a number according to the wheel.
-prime ixtowcoprime(const primewheel *const pw, size_t ix);
+static inline prime w_coprime_of_ix(const primewheel *const pw, size_t ix) {
+    return (ix / pw->spokes) * pw->circumference + pw->wp_coprimes[ix % pw->spokes];
+}
 
 /// Takes a number coprime to the wheel primes to an array index.
-size_t wcoprimetoix(const primewheel *const pw, prime cp);
+static inline size_t w_ix_of_coprime(const primewheel *const pw, prime cp) {
+    return (cp / pw->circumference) * pw->spokes
+        + pw->ix_of_coprime[cp % pw->circumference];
+}
 
 /// Finds the index corresponding to the greatest number less than or
 /// equal to n.
