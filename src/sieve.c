@@ -122,29 +122,6 @@ static inline size_t calc_svp_ix_increment(const primewheel* const pw,
     return tmp_ix;
 }
 
-// Note: this separate loop without checks in the inner portion is FAR
-// more efficient than the alternative.
-
-// TODO: Investigate additional speedup resulting from extraction to
-// separate function
-static size_t inner_marking_loop(const size_t* const ix_workspace,
-                                 bitarray* const bitarray,
-                                 size_t L_w,
-                                 size_t dp) {
-    bitunit* bits = bitarray->bits;
-    size_t nbits = bitarray->nbits;
-    size_t delta_ix = 0;
-
-    for (size_t M = ix_workspace[L_w - 1];
-         M + delta_ix < nbits;
-         delta_ix += dp) {
-        for (size_t i = 0; i < L_w; i++) {
-            CLEARBIT(bits, delta_ix + ix_workspace[i]);
-        }
-    }
-    return delta_ix;
-}
-
 /// Marks the prime in the current sieve and prepares for sieving with
 /// a consecutive buffer.
 /**
@@ -161,11 +138,12 @@ static void do_mark_prime(size_t* ix_workspace,
                           const primewheel* const pw,
                           sieve* const sieve,
                           sieving_prime* svp) {
-    bitarray* bits = sieve->sievebits;
+    bitunit* bits = sieve->sievebits->bits;
+    size_t nbits = sieve->sievebits->nbits;
     // Useful for large primes. We lose nothing here as this check
     // must be performed anyway.
-    if (svp->next_ix >= bits->nbits) {
-        svp->next_ix -= bits->nbits;
+    if (svp->next_ix >= nbits) {
+        svp->next_ix -= nbits;
         return;
     }
 
@@ -175,22 +153,29 @@ static void do_mark_prime(size_t* ix_workspace,
 
     ix_workspace[0] = tmp_ix;
 
-    uint_fast32_t i;
+    size_t i;
     for (i = 1; i < L_w; i++) {
         svp_ix_increment(pw, svp, &tmp_ix, &svp->needle);
         ix_workspace[i] = tmp_ix;
     }
 
-    size_t delta_ix = inner_marking_loop(ix_workspace,
-                                         bits,
-                                         L_w,
-                                         dp);
-
-    for (i = 0; ix_workspace[i] + delta_ix < bits->nbits; i++) {
-        CLEARBIT(bits->bits, ix_workspace[i] + delta_ix);
+    // 2 features of this code give the inner loop speed:
+    // (1): there are no additional comparisons inside the double loop
+    // (2): the type of i in the inner loop should be size_t
+    size_t delta_ix = 0;
+    for (size_t M = ix_workspace[L_w - 1];
+         M + delta_ix < nbits;
+         delta_ix += dp) {
+        for (i = 0; i < L_w; i++) {
+            CLEARBIT(bits, delta_ix + ix_workspace[i]);
+        }
     }
 
-    svp->next_ix = (delta_ix + ix_workspace[i]) - bits->nbits;
+    for (i = 0; ix_workspace[i] + delta_ix < nbits; i++) {
+        CLEARBIT(bits, ix_workspace[i] + delta_ix);
+    }
+
+    svp->next_ix = (delta_ix + ix_workspace[i]) - nbits;
     svp->needle += i + 1;
     if (svp->needle >= L_w) { svp->needle -= L_w; }
 }
