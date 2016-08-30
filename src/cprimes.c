@@ -39,7 +39,8 @@ size_t segmented_count_primes(siever* siever,
         return count;
     }
 
-    if (from <= siever->sieving_primes[siever->n_sieving_primes - 1]->prime) {
+    if ((siever->n_sieving_primes > 0) &&
+        (from <= siever->sieving_primes[siever->n_sieving_primes - 1]->prime)) {
         size_t svp_ix;
         prime p;
 

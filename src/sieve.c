@@ -59,14 +59,24 @@ void extend_siever(siever* siever,
                    sieve* segment,
                    prime new_sieve_limit) {
     prime sqlm = (prime) floor(sqrt((double)new_sieve_limit));
+    if (sqlm > siever->sieve_limit) {
+        extend_siever(siever, segment, sqlm);
+    }
 
     prime* newps;
     size_t n_newps;
 
+    prime largest_prime;
+    if (siever->n_sieving_primes > 0) {
+        largest_prime = siever->sieving_primes[siever->n_sieving_primes - 1]->prime;
+    } else {
+        largest_prime = siever->pw->primes[siever->pw->nprimes - 1];
+    }
+    largest_prime += 2;
+
     segmented_list_primes(siever,
                           segment,
-                          siever->sieving_primes[siever->n_sieving_primes - 1]->prime
-                          + 2,
+                          largest_prime,
                           sqlm,
                           &newps,
                           &n_newps);
