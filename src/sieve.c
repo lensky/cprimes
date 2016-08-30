@@ -193,16 +193,16 @@ static void do_mark_prime(size_t* ix_workspace,
 /// Initializes sieving prime for sieving, starting with the given sieve.
 // At the moment, this function calculates the initial index and needle position.
 void init_svp_for_sieving(const primewheel* const pw,
-                          const sieve* const sieve,
+                          size_t ix_offset,
                           sieving_prime* svp) {
     svp->needle = svp->offset;
 
     size_t ixp2 = w_ix_of_coprime(pw, svp->prime * svp->prime);
     size_t delta_p = pw->spokes * svp->prime;
 
-    if (ixp2 < sieve->ix_offset) {
+    if (ixp2 < ix_offset) {
         svp->next_ix = delta_p
-            - ((sieve->ix_offset - ixp2) % delta_p);
+            - ((ix_offset - ixp2) % delta_p);
 
         size_t tmp_needle = svp->needle > 0 ? svp->needle - 1 : pw->spokes - 1;
         size_t incr = calc_svp_ix_increment(pw, svp, tmp_needle);
@@ -214,7 +214,7 @@ void init_svp_for_sieving(const primewheel* const pw,
             incr = calc_svp_ix_increment(pw, svp, tmp_needle);
         }
     } else {
-        svp->next_ix = ixp2 - sieve->ix_offset;
+        svp->next_ix = ixp2 - ix_offset;
     }
 }
 
@@ -305,7 +305,7 @@ void segmented_sieve(siever* siever,
         reset_sieve(segment);
         for (size_t j = 0; j < siever->n_sieving_primes; j++) {
             sieving_prime* svp = siever->sieving_primes[j];;
-            init_svp_for_sieving(siever->pw, segment, svp);
+            init_svp_for_sieving(siever->pw, segment->ix_offset, svp);
 
             do_mark_prime(ix_workspace, siever->pw, segment, svp);
         }
@@ -338,7 +338,7 @@ void segmented_sieve(siever* siever,
         reset_sieve(segment);
         for (size_t j = 0; j < siever->n_sieving_primes; j++) {
             sieving_prime* svp = siever->sieving_primes[j];
-            init_svp_for_sieving(siever->pw, segment, svp);
+            init_svp_for_sieving(siever->pw, segment->ix_offset, svp);
             do_mark_prime(ix_workspace, siever->pw, segment, svp);
         }
         action(pw, segment, acc);
