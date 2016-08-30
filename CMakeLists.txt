@@ -36,7 +36,7 @@ find_path(
   )
 
 include_directories(include)
-install(DIRECTORY include DESTINATION include)
+install(DIRECTORY include/ DESTINATION include)
 add_subdirectory(src)
 
 enable_testing()
