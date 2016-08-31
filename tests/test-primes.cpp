@@ -195,6 +195,42 @@ TEST(SegmentedSieveTest, SubtractCount) {
     free_primewheel(&pw);
 }
 
+#define GEN_LIM 10000000
+TEST(GeneratorTest, Comparision) {
+    primewheel pwg, pws; siever svr; sieve segment;
+    new_primewheel(&pwg, 3);
+    new_primewheel(&pws, 4);
+
+    new_sieve(&segment, DEF_BUFSIZE, 0);
+
+    new_siever(&svr, &pws, 1000);
+
+    prime* ps; size_t pcount;
+    segmented_list_primes(&svr, &segment, 0, GEN_LIM, &ps, &pcount);
+
+    prime_generator pg;
+    new_prime_generator(&pg, &pwg, 100);
+    size_t pgcount = 0;
+    for (prime p = prime_generator_next(&pg, &segment);
+         p < GEN_LIM;
+         p = prime_generator_next(&pg, &segment)) {
+        if (pgcount < pcount) {
+            ASSERT_EQ(ps[pgcount], p);
+        }
+        pgcount++;
+    }
+
+    ASSERT_EQ(pcount, pgcount);
+
+    free_primewheel(&pwg);
+    free_primewheel(&pws);
+    free_prime_generator(&pg);
+    free_sieve(&segment);
+    free_siever(&svr);
+
+    free(ps);
+}
+
 int main(int argc, char *argv[])
 {
     srand(time(NULL));

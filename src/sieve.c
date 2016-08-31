@@ -144,10 +144,10 @@ static inline size_t calc_svp_ix_increment(const primewheel* const pw,
    @param[in] sieve current sieve
    @param[in,out] svp sieving prime, will have next_ix appropriately updated
 */
-static void do_mark_prime(size_t* ix_workspace,
-                          const primewheel* const pw,
-                          sieve* const sieve,
-                          sieving_prime* svp) {
+void do_mark_prime(size_t* ix_workspace,
+                   const primewheel* const pw,
+                   sieve* const sieve,
+                   sieving_prime* svp) {
     bitunit* bits = sieve->sievebits->bits;
     size_t nbits = sieve->sievebits->nbits;
     // Useful for large primes. We lose nothing here as this check
@@ -223,7 +223,7 @@ void sieving_primes_to_n(const primewheel * const pw,
                          sieving_prime*** svps,
                          size_t* nsvps) {
     size_t nix = closest_w_ixle(pw, n);
-    if (nix <= 1) {
+    if (nix < 1) {
         *svps = NULL;
         *nsvps = 0;
         return;
