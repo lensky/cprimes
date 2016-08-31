@@ -24,6 +24,10 @@ typedef struct sieving_prime {
     prime prime;
 } sieving_prime;
 
+static inline void copy_sieving_prime(sieving_prime* dest, sieving_prime* source) {
+    *dest = *source;
+}
+
 typedef struct siever {
     const primewheel* pw;
     sieving_prime** sieving_primes;
@@ -35,6 +39,7 @@ void new_siever(siever* siever,
                 const primewheel* const pw,
                 prime sieve_limit);
 void free_siever(siever* siever);
+void copy_siever(siever* dest, siever* source);
 
 void extend_siever(siever* siever,
                    sieve* segment,

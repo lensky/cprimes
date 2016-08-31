@@ -44,6 +44,11 @@ void free_prime_generator(prime_generator* pg) {
     free_siever(&(pg->siever));
 }
 
+void copy_prime_generator(prime_generator* dest, prime_generator* source) {
+    *dest = *source;
+    copy_siever(&(dest->siever), &(source->siever));
+}
+
 prime prime_generator_next(prime_generator* pg, sieve* segment) {
     if (pg->listing_wheel) {
         if (pg->index < pg->siever.pw->nprimes) {

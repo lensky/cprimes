@@ -55,6 +55,16 @@ void free_siever(siever* siever) {
     free_cvector_data((cvector_data_unit*) siever->sieving_primes);
 }
 
+void copy_siever(siever* dest, siever* source) {
+    *dest = *source;
+    dest->sieving_primes = malloc(sizeof(*(dest->sieving_primes)) * dest->n_sieving_primes);
+    for (size_t i = 0; i < dest->n_sieving_primes; i++) {
+        sieving_prime* svp = malloc(sizeof(*svp));
+        dest->sieving_primes[i] = svp;
+        copy_sieving_prime(svp, source->sieving_primes[i]);
+    }
+}
+
 void extend_siever(siever* siever,
                    sieve* segment,
                    prime new_sieve_limit) {

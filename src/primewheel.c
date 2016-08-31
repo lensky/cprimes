@@ -1,12 +1,30 @@
 #include <stdlib.h>
+#include <string.h>
 
 #include "cprimes/utils.h"
 #include "cprimes/primewheel.h"
 
+#define PW_ALLOC_PRIMES(pw) (pw->primes = malloc((sizeof(*(pw->primes)) * pw->nprimes)))
+
+#define PW_DIM_IX_MOD(pw) (pw->spokes * (pw->spokes - 1))
+#define PW_DIM_IX_MOD_TOT(pw) (pw->spokes)
+#define PW_DIM_IX_DIV(pw) (pw->spokes - 1)
+
+// Does all allocation except pw->primes
+static inline void alloc_primewheel(primewheel* pw) {
+    pw->wp_coprimes = (prime*) malloc(sizeof(prime) * pw->spokes);
+    pw->ix_of_coprime = (size_t*) malloc(sizeof(prime) * pw->circumference);
+
+    pw->incr_ix_mod = (size_t*) malloc(PW_DIM_IX_MOD(pw) * sizeof(size_t));
+    pw->incr_ix_mod_tot = (size_t*) malloc(PW_DIM_IX_MOD_TOT(pw) * sizeof(size_t));
+    pw->incr_ix_div = (size_t*) malloc(PW_DIM_IX_DIV(pw) * sizeof(size_t));
+
+}
+
 void new_primewheel(primewheel* pw, size_t nprimes) {
     pw->nprimes = nprimes;
 
-    pw->primes = (prime*) malloc(sizeof(prime) * nprimes);
+    PW_ALLOC_PRIMES(pw);
 
     pw->primes[0] = 2;
     pw->circumference = 2;
@@ -23,8 +41,7 @@ void new_primewheel(primewheel* pw, size_t nprimes) {
         p = find_next_coprime(pw->primes, i, p + 2);
     }
 
-    pw->wp_coprimes = (prime*) malloc(sizeof(prime) * pw->spokes);
-    pw->ix_of_coprime = (size_t*) malloc(sizeof(prime) * pw->circumference);
+    alloc_primewheel(pw);
 
     pw->wp_coprimes[0] = 1;
     pw->wp_coprimes[1] = p;
@@ -40,10 +57,6 @@ void new_primewheel(primewheel* pw, size_t nprimes) {
             pw->ix_of_coprime[q] = i++; // Note we increment i here
         }
     }
-
-    pw->incr_ix_mod = (size_t*) malloc(pw->spokes * (pw->spokes - 1) * sizeof(size_t));
-    pw->incr_ix_mod_tot = (size_t*) malloc(pw->spokes * sizeof(size_t));
-    pw->incr_ix_div = (size_t*) malloc((pw->spokes - 1) * sizeof(size_t));
 
     for (i = 0; i < pw->spokes; i++) {
         prime cp = pw->wp_coprimes[i];
@@ -65,6 +78,27 @@ void new_primewheel(primewheel* pw, size_t nprimes) {
             pw->incr_ix_div[i] = pw->spokes * (pw->wp_coprimes[i + 1] - cp);
         }
     }
+}
+
+void copy_primewheel(primewheel* pw_dest, primewheel* pw_source) {
+    *pw_dest = *pw_source;
+
+    PW_ALLOC_PRIMES(pw_dest);
+    alloc_primewheel(pw_dest);
+
+    memcpy(pw_dest->primes, pw_source->primes,
+           sizeof(*(pw_dest->primes)) * pw_dest->nprimes);
+    memcpy(pw_dest->wp_coprimes, pw_source->wp_coprimes,
+           sizeof(*(pw_dest->wp_coprimes)) * pw_dest->spokes);
+    memcpy(pw_dest->ix_of_coprime, pw_source->ix_of_coprime,
+           sizeof(*(pw_dest->ix_of_coprime)) * pw_dest->circumference);
+
+    memcpy(pw_dest->incr_ix_mod, pw_source->incr_ix_mod,
+           sizeof(*(pw_dest->incr_ix_mod)) * PW_DIM_IX_MOD(pw_dest));
+    memcpy(pw_dest->incr_ix_mod_tot, pw_source->incr_ix_mod_tot,
+           sizeof(*(pw_dest->incr_ix_mod_tot)) * PW_DIM_IX_MOD_TOT(pw_dest));
+    memcpy(pw_dest->incr_ix_div, pw_source->incr_ix_div,
+           sizeof(*(pw_dest->incr_ix_div)) * PW_DIM_IX_DIV(pw_dest));
 }
 
 void free_primewheel(primewheel* pw) {

@@ -18,6 +18,7 @@ void new_prime_generator(prime_generator* pg,
                          const primewheel* const pw,
                          prime init_limit);
 void free_prime_generator(prime_generator* pg);
+void copy_prime_generator(prime_generator* dest, prime_generator* source);
 
 prime prime_generator_next(prime_generator* pg, sieve* segment);
 

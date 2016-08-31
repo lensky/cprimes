@@ -55,6 +55,7 @@ typedef struct primewheel {
 
 void new_primewheel(primewheel* pw, size_t nprimes);
 void free_primewheel(primewheel* pw);
+void copy_primewheel(primewheel* pw_dest, primewheel* pw_source);
 
 /// Takes an array index to a number according to the wheel.
 static inline prime w_coprime_of_ix(const primewheel *const pw, size_t ix) {
