@@ -195,6 +195,31 @@ TEST(SegmentedSieveTest, SubtractCount) {
     free_primewheel(&pw);
 }
 
+TEST(SegmentedSieveTest, TrivialCasese) {
+    primewheel pw; new_primewheel(&pw, 4);
+    siever siever; new_siever(&siever, &pw, 1e7);
+    sieve segment; new_sieve(&segment, DEF_BUFSIZE, 0);
+
+    ASSERT_EQ(0, segmented_count_primes(&siever, &segment, 0, 0));
+    ASSERT_EQ(0, segmented_count_primes(&siever, &segment, 0, 1));
+    ASSERT_EQ(0, segmented_count_primes(&siever, &segment, 100, 99));
+
+    prime *primes; size_t pcount;
+    segmented_list_primes(&siever, &segment, 0, 0, &primes, &pcount);
+    ASSERT_EQ(0, pcount);
+    free(primes);
+    segmented_list_primes(&siever, &segment, 0, 1, &primes, &pcount);
+    ASSERT_EQ(0, pcount);
+    free(primes);
+    segmented_list_primes(&siever, &segment, 100, 99, &primes, &pcount);
+    ASSERT_EQ(0, pcount);
+    free(primes);
+
+    free_siever(&siever);
+    free_primewheel(&pw);
+    free_sieve(&segment);
+}
+
 #define GEN_LIM 10000000
 TEST(GeneratorTest, Comparision) {
     primewheel pwg, pws; siever svr; sieve segment;

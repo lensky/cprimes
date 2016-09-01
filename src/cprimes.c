@@ -229,8 +229,8 @@ void segmented_list_primes(siever* siever,
                            prime** primes,
                            size_t* nprimes) {
     if (to <= 1) {
-        primes = NULL;
-        nprimes = 0;
+        *primes = NULL;
+        *nprimes = 0;
         return;
     }
 
